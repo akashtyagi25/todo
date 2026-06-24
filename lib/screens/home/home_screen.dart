@@ -15,7 +15,6 @@ import '../../widgets/todo_empty_state.dart';
 import '../../widgets/todo_filter_bar.dart';
 import '../../widgets/todo_list_item.dart';
 import '../../widgets/todo_search_bar.dart';
-import '../../widgets/todo_section_header.dart';
 import '../../widgets/todo_sort_button.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -116,122 +115,98 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildTodoList(BuildContext context, List<Todo> todos) {
-    final pendingTodos =
-        todos.where((todo) => todo.status == TodoStatus.pending).toList();
-    final completedTodos =
-        todos.where((todo) => todo.status == TodoStatus.completed).toList();
-
     return ResponsiveContent(
-      child: ListView(
+      child: ListView.builder(
         padding: const EdgeInsets.only(bottom: 96),
-        children: [
-          if (pendingTodos.isNotEmpty) ...[
-            TodoSectionHeader(
-              title: 'Pending',
-              count: pendingTodos.length,
-              icon: Icons.pending_actions_outlined,
+        itemCount: todos.length,
+        itemBuilder: (context, index) {
+          final todo = todos[index];
+          return TodoListItem(
+            todo: todo,
+            onToggle: () => _toggleStatus(context, todo),
+            onEdit: () => Navigator.pushNamed(
+              context,
+              AppRoutes.editTodo,
+              arguments: todo.id,
             ),
-            ...pendingTodos.map(
-              (todo) => TodoListItem(
-                todo: todo,
-                onToggle: () => _toggleStatus(context, todo),
-                onEdit: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.editTodo,
-                  arguments: todo.id,
-                ),
-                onDelete: () => _deleteTodo(context, todo),
-              ),
-            ),
-          ],
-          if (completedTodos.isNotEmpty) ...[
-            TodoSectionHeader(
-              title: 'Completed',
-              count: completedTodos.length,
-              icon: Icons.task_alt_outlined,
-            ),
-            ...completedTodos.map(
-              (todo) => TodoListItem(
-                todo: todo,
-                onToggle: () => _toggleStatus(context, todo),
-                onEdit: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.editTodo,
-                  arguments: todo.id,
-                ),
-                onDelete: () => _deleteTodo(context, todo),
-              ),
-            ),
-          ],
-        ],
+            onDelete: () => _deleteTodo(context, todo),
+          );
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppConstants.appName),
-        actions: const [
-          TodoSortButton(),
-          SizedBox(width: AppSpacing.sm),
-        ],
-      ),
-      body: Consumer<TodoProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const AppLoadingView();
-          }
-
-          if (provider.todos.isEmpty) {
-            return Column(
-              children: [
-                _buildErrorBanner(context, provider),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    child: KeyedSubtree(
-                      key: const ValueKey('empty-tasks'),
-                      child: _buildNoTasksEmptyState(context, provider),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildErrorBanner(context, provider),
-              const ResponsiveContent(child: TodoSearchBar()),
-              const SizedBox(height: AppSpacing.xs),
-              const ResponsiveContent(child: TodoFilterBar()),
-              const SizedBox(height: AppSpacing.sm),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: provider.filteredTodos.isEmpty
-                      ? KeyedSubtree(
-                          key: const ValueKey('no-results'),
-                          child: _buildNoResultsEmptyState(context, provider),
-                        )
-                      : KeyedSubtree(
-                          key: const ValueKey('todo-list'),
-                          child: _buildTodoList(context, provider.filteredTodos),
-                        ),
-                ),
-              ),
+    return Consumer<TodoProvider>(
+      builder: (context, provider, _) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(AppConstants.appName),
+            actions: const [
+              TodoSortButton(),
+              SizedBox(width: AppSpacing.sm),
             ],
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, AppRoutes.addTodo),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Todo'),
-      ),
+          ),
+          body: _buildBody(context, provider),
+          floatingActionButton: provider.todos.isEmpty
+              ? null
+              : FloatingActionButton.extended(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.addTodo),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Todo'),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, TodoProvider provider) {
+    if (provider.isLoading) {
+      return const AppLoadingView();
+    }
+
+    if (provider.todos.isEmpty) {
+      return Column(
+        children: [
+          _buildErrorBanner(context, provider),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: KeyedSubtree(
+                key: const ValueKey('empty-tasks'),
+                child: _buildNoTasksEmptyState(context, provider),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildErrorBanner(context, provider),
+        const ResponsiveContent(child: TodoSearchBar()),
+        const SizedBox(height: AppSpacing.xs),
+        const ResponsiveContent(child: TodoFilterBar()),
+        const SizedBox(height: AppSpacing.sm),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: provider.filteredTodos.isEmpty
+                ? KeyedSubtree(
+                    key: const ValueKey('no-results'),
+                    child: _buildNoResultsEmptyState(context, provider),
+                  )
+                : KeyedSubtree(
+                    key: const ValueKey('todo-list'),
+                    child: _buildTodoList(context, provider.filteredTodos),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }

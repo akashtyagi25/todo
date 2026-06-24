@@ -21,6 +21,6 @@ void main() {
     expect(find.text(AppConstants.emptyTasksTitle), findsOneWidget);
     expect(find.text(AppConstants.emptyTasksSubtitle), findsOneWidget);
     expect(find.text('Create Task'), findsOneWidget);
-    expect(find.text('Add Todo'), findsOneWidget);
+    expect(find.text('Add Todo'), findsNothing);
   });
 }

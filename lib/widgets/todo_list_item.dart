@@ -178,25 +178,6 @@ class TodoListItem extends StatelessWidget {
                         muted: _isCompleted,
                       ),
                       StatusChip(status: todo.status),
-                      if (_isCompleted)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle_outline,
-                              size: 14,
-                              color: completedColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Done',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: completedColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
                     ],
                   ),
                 ),
