@@ -2,12 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../constants/app_constants.dart';
+import '../../models/todo.dart';
 import '../../providers/todo_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/todo_list_item.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  Future<void> _deleteTodo(BuildContext context, Todo todo) async {
+    await context.read<TodoProvider>().deleteTodo(todo.id);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('"${todo.title}" deleted')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +75,7 @@ class HomeScreen extends StatelessWidget {
                   AppRoutes.editTodo,
                   arguments: todo.id,
                 ),
-                onDelete: () => provider.deleteTodo(todo.id),
+                onDelete: () => _deleteTodo(context, todo),
               );
             },
           );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/todo.dart';
 import '../utils/date_formatter.dart';
+import 'delete_todo_dialog.dart';
 import 'priority_chip.dart';
 import 'status_chip.dart';
 
@@ -29,6 +30,10 @@ class TodoListItem extends StatelessWidget {
     return due.isBefore(now);
   }
 
+  Future<bool> _confirmDelete(BuildContext context) {
+    return DeleteTodoDialog.show(context, todo);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -36,6 +41,7 @@ class TodoListItem extends StatelessWidget {
     return Dismissible(
       key: ValueKey(todo.id),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => _confirmDelete(context),
       onDismissed: (_) => onDelete(),
       background: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -60,7 +66,7 @@ class TodoListItem extends StatelessWidget {
           onTap: onEdit,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 12, 12, 12),
+            padding: const EdgeInsets.fromLTRB(8, 12, 4, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -110,6 +116,14 @@ class TodoListItem extends StatelessWidget {
                       icon: const Icon(Icons.edit_outlined),
                       tooltip: 'Edit todo',
                       onPressed: onEdit,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      tooltip: 'Delete todo',
+                      onPressed: () async {
+                        final confirmed = await _confirmDelete(context);
+                        if (confirmed) onDelete();
+                      },
                     ),
                   ],
                 ),
