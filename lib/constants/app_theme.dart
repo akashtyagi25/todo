@@ -6,11 +6,21 @@ class AppTheme {
   AppTheme._();
 
   static const Color _seedColor = Color(0xFF6750A4);
+  static const Color completedLight = Color(0xFF2E7D32);
+  static const Color completedDark = Color(0xFF81C784);
 
-  static ThemeData get lightTheme {
+  static Color completedColor(Brightness brightness) {
+    return brightness == Brightness.dark ? completedDark : completedLight;
+  }
+
+  static ThemeData get lightTheme => _theme(Brightness.light);
+
+  static ThemeData get darkTheme => _theme(Brightness.dark);
+
+  static ThemeData _theme(Brightness brightness) {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: _seedColor,
-      brightness: Brightness.light,
+      brightness: brightness,
     );
 
     return ThemeData(

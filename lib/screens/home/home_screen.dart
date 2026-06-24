@@ -15,6 +15,7 @@ import '../../widgets/todo_empty_state.dart';
 import '../../widgets/todo_filter_bar.dart';
 import '../../widgets/todo_list_item.dart';
 import '../../widgets/todo_search_bar.dart';
+import '../../widgets/theme_toggle_button.dart';
 import '../../widgets/todo_sort_button.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -144,6 +145,7 @@ class HomeScreen extends StatelessWidget {
           appBar: AppBar(
             title: const Text(AppConstants.appName),
             actions: const [
+              ThemeToggleButton(),
               TodoSortButton(),
               SizedBox(width: AppSpacing.sm),
             ],

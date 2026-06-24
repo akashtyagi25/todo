@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:todo/app.dart';
 import 'package:todo/constants/app_constants.dart';
+import 'package:todo/providers/theme_provider.dart';
 import 'package:todo/providers/todo_provider.dart';
 
 void main() {
@@ -11,8 +12,11 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      ChangeNotifierProvider(
-        create: (_) => TodoProvider(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => TodoProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ],
         child: const TodoApp(),
       ),
     );

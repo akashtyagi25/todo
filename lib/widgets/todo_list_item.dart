@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_spacing.dart';
+import '../constants/app_theme.dart';
 import '../models/todo.dart';
 import '../utils/date_formatter.dart';
 import 'delete_todo_dialog.dart';
@@ -40,7 +41,7 @@ class TodoListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final completedColor = const Color(0xFF2E7D32);
+    final completedColor = AppTheme.completedColor(theme.brightness);
 
     return Dismissible(
       key: ValueKey(todo.id),

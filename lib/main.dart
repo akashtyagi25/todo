@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'app.dart';
+import 'providers/theme_provider.dart';
 import 'providers/todo_provider.dart';
 import 'repository/todo_repository.dart';
 import 'services/hive_service.dart';
@@ -28,18 +29,23 @@ Future<void> main() async {
     }
 
     final repository = TodoRepository(localService: localService);
-    final provider = TodoProvider(
+    final todoProvider = TodoProvider(
       repository: repository,
       storageFallback: storageUnavailable,
     );
+    final themeProvider = ThemeProvider();
+    await themeProvider.load();
 
     runApp(
-      ChangeNotifierProvider.value(
-        value: provider,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: todoProvider),
+          ChangeNotifierProvider.value(value: themeProvider),
+        ],
         child: const TodoApp(),
       ),
     );
 
-    await provider.loadTodos();
+    await todoProvider.loadTodos();
   }, AppErrorHandler.log);
 }
