@@ -6,6 +6,7 @@ import '../../models/todo.dart';
 import '../../providers/todo_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/todo_filter.dart';
+import '../../widgets/todo_empty_state.dart';
 import '../../widgets/todo_filter_bar.dart';
 import '../../widgets/todo_list_item.dart';
 import '../../widgets/todo_search_bar.dart';
@@ -43,42 +44,36 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildEmptyState(
-    BuildContext context, {
-    required IconData icon,
-    required String message,
-  }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 72,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              message,
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
+  String _emptyResultsMessage(TodoProvider provider) {
+    if (provider.isSearching && provider.isFiltering) {
+      return 'No tasks match your search and "${provider.activeFilter.label}" filter.';
+    }
+    if (provider.isSearching) {
+      return 'No tasks match "${provider.searchQuery}".';
+    }
+    return 'No ${provider.activeFilter.label.toLowerCase()} tasks found.';
+  }
+
+  Widget _buildNoTasksEmptyState(BuildContext context) {
+    return TodoEmptyState(
+      icon: Icons.task_alt_outlined,
+      title: AppConstants.emptyTasksTitle,
+      subtitle: AppConstants.emptyTasksSubtitle,
+      actionLabel: 'Create Task',
+      onAction: () => Navigator.pushNamed(context, AppRoutes.addTodo),
     );
   }
 
-  String _emptyResultsMessage(TodoProvider provider) {
-    if (provider.isSearching && provider.isFiltering) {
-      return 'No todos match your search and "${provider.activeFilter.label}" filter';
-    }
-    if (provider.isSearching) {
-      return 'No todos match "${provider.searchQuery}"';
-    }
-    return 'No ${provider.activeFilter.label.toLowerCase()} tasks';
+  Widget _buildNoResultsEmptyState(BuildContext context, TodoProvider provider) {
+    return TodoEmptyState(
+      icon: provider.isSearching
+          ? Icons.search_off_outlined
+          : Icons.filter_alt_off_outlined,
+      title: _emptyResultsMessage(provider),
+      subtitle: provider.isSearching || provider.isFiltering
+          ? 'Try adjusting your search or filter.'
+          : null,
+    );
   }
 
   Widget _buildTodoList(BuildContext context, List<Todo> todos) {
@@ -148,6 +143,10 @@ class HomeScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (provider.todos.isEmpty) {
+            return _buildNoTasksEmptyState(context);
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -156,56 +155,9 @@ class HomeScreen extends StatelessWidget {
               const TodoFilterBar(),
               const SizedBox(height: 8),
               Expanded(
-                child: Builder(
-                  builder: (context) {
-                    if (provider.todos.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.checklist_rounded,
-                              size: 72,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withValues(alpha: 0.4),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No todos yet',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap + to create your first todo',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    if (provider.filteredTodos.isEmpty) {
-                      return _buildEmptyState(
-                        context,
-                        icon: provider.isSearching
-                            ? Icons.search_off_outlined
-                            : Icons.filter_alt_off_outlined,
-                        message: _emptyResultsMessage(provider),
-                      );
-                    }
-
-                    return _buildTodoList(context, provider.filteredTodos);
-                  },
-                ),
+                child: provider.filteredTodos.isEmpty
+                    ? _buildNoResultsEmptyState(context, provider)
+                    : _buildTodoList(context, provider.filteredTodos),
               ),
             ],
           );
