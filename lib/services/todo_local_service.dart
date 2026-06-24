@@ -1,20 +1,18 @@
-import 'dart:convert';
+import 'package:hive/hive.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
-import '../constants/app_constants.dart';
 import '../models/todo.dart';
+import 'hive_service.dart';
 
-/// Handles low-level data operations using local device storage.
+/// Handles low-level data operations using Hive local storage.
 class TodoLocalService {
-  TodoLocalService._(this._prefs, this._memoryTodos);
+  TodoLocalService._(this._box, this._memoryTodos);
 
-  final SharedPreferences? _prefs;
+  final Box<Todo>? _box;
   final List<Todo>? _memoryTodos;
 
   static Future<TodoLocalService> create() async {
-    final prefs = await SharedPreferences.getInstance();
-    return TodoLocalService._(prefs, null);
+    final box = await HiveService.openTodosBox();
+    return TodoLocalService._(box, null);
   }
 
   factory TodoLocalService.inMemory() {
@@ -26,38 +24,36 @@ class TodoLocalService {
       return List.from(_memoryTodos!);
     }
 
-    final stored = _prefs!.getStringList(AppConstants.todosStorageKey) ?? [];
-    return stored.map((item) => Todo.fromJson(jsonDecode(item))).toList();
+    return _box!.values.toList();
   }
 
   Future<void> saveTodo(Todo todo) async {
-    final todos = await fetchTodos()..add(todo);
-    await _persist(todos);
-  }
-
-  Future<void> updateTodo(Todo todo) async {
-    final todos = await fetchTodos();
-    final index = todos.indexWhere((item) => item.id == todo.id);
-    if (index == -1) return;
-
-    todos[index] = todo;
-    await _persist(todos);
-  }
-
-  Future<void> deleteTodo(String id) async {
-    final todos = await fetchTodos()..removeWhere((todo) => todo.id == id);
-    await _persist(todos);
-  }
-
-  Future<void> _persist(List<Todo> todos) async {
     if (_memoryTodos != null) {
-      _memoryTodos!
-        ..clear()
-        ..addAll(todos);
+      _memoryTodos!.add(todo);
       return;
     }
 
-    final encoded = todos.map((todo) => jsonEncode(todo.toJson())).toList();
-    await _prefs!.setStringList(AppConstants.todosStorageKey, encoded);
+    await _box!.put(todo.id, todo);
+  }
+
+  Future<void> updateTodo(Todo todo) async {
+    if (_memoryTodos != null) {
+      final index = _memoryTodos!.indexWhere((item) => item.id == todo.id);
+      if (index != -1) {
+        _memoryTodos![index] = todo;
+      }
+      return;
+    }
+
+    await _box!.put(todo.id, todo);
+  }
+
+  Future<void> deleteTodo(String id) async {
+    if (_memoryTodos != null) {
+      _memoryTodos!.removeWhere((todo) => todo.id == id);
+      return;
+    }
+
+    await _box!.delete(id);
   }
 }

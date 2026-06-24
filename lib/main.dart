@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import 'app.dart';
 import 'providers/todo_provider.dart';
 import 'repository/todo_repository.dart';
+import 'services/hive_service.dart';
 import 'services/todo_local_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await HiveService.init();
   final localService = await TodoLocalService.create();
   final repository = TodoRepository(localService: localService);
 
