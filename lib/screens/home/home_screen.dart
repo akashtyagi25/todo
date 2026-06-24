@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../constants/app_constants.dart';
 import '../../providers/todo_provider.dart';
+import '../../routes/app_routes.dart';
 import '../../widgets/todo_list_item.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -21,12 +22,37 @@ class HomeScreen extends StatelessWidget {
           }
 
           if (provider.todos.isEmpty) {
-            return const Center(
-              child: Text('No todos yet. Tap + to add one.'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.checklist_rounded,
+                    size: 72,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.4),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No todos yet',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap + to create your first todo',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
             );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: provider.todos.length,
             itemBuilder: (context, index) {
               final todo = provider.todos[index];
@@ -39,48 +65,11 @@ class HomeScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTodoDialog(context),
-        tooltip: 'Add todo',
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.pushNamed(context, AppRoutes.addTodo),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Todo'),
       ),
-    );
-  }
-
-  void _showAddTodoDialog(BuildContext context) {
-    final controller = TextEditingController();
-
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Add Todo'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Enter todo title',
-            ),
-            onSubmitted: (value) {
-              context.read<TodoProvider>().addTodo(value);
-              Navigator.pop(dialogContext);
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                context.read<TodoProvider>().addTodo(controller.text);
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

@@ -27,13 +27,24 @@ class TodoProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addTodo(String title) async {
+  Future<void> addTodo({
+    required String title,
+    required String description,
+    required DateTime dueDate,
+    required TodoPriority priority,
+  }) async {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) return;
 
+    final now = DateTime.now();
     final todo = Todo(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: now.millisecondsSinceEpoch.toString(),
       title: trimmedTitle,
+      description: description.trim(),
+      dueDate: dueDate,
+      priority: priority,
+      status: TodoStatus.pending,
+      createdDate: now,
     );
 
     await _repository.addTodo(todo);
@@ -45,8 +56,11 @@ class TodoProvider extends ChangeNotifier {
     final index = _todos.indexWhere((todo) => todo.id == id);
     if (index == -1) return;
 
-    final updated = _todos[index].copyWith(
-      isCompleted: !_todos[index].isCompleted,
+    final current = _todos[index];
+    final updated = current.copyWith(
+      status: current.status == TodoStatus.pending
+          ? TodoStatus.completed
+          : TodoStatus.pending,
     );
 
     await _repository.updateTodo(updated);
