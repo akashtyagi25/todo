@@ -1,4 +1,6 @@
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../constants/app_constants.dart';
 import '../models/todo.dart';
@@ -12,7 +14,12 @@ class HiveService {
   static Future<void> init() async {
     if (_initialized) return;
 
-    await Hive.initFlutter();
+    if (kIsWeb) {
+      Hive.init('todo_hive');
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      Hive.init(directory.path);
+    }
 
     if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(TodoAdapter());
@@ -23,6 +30,16 @@ class HiveService {
 
   static Future<Box<Todo>> openTodosBox() async {
     await init();
-    return Hive.openBox<Todo>(AppConstants.todosBoxName);
+
+    if (Hive.isBoxOpen(AppConstants.todosBoxName)) {
+      return Hive.box<Todo>(AppConstants.todosBoxName);
+    }
+
+    try {
+      return await Hive.openBox<Todo>(AppConstants.todosBoxName);
+    } catch (_) {
+      await Hive.deleteBoxFromDisk(AppConstants.todosBoxName);
+      return Hive.openBox<Todo>(AppConstants.todosBoxName);
+    }
   }
 }

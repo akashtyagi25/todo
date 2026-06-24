@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../constants/app_spacing.dart';
 import '../providers/todo_provider.dart';
 
 class TodoSearchBar extends StatefulWidget {
@@ -35,7 +36,12 @@ class _TodoSearchBarState extends State<TodoSearchBar> {
     return Consumer<TodoProvider>(
       builder: (context, provider, _) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            AppSpacing.xs,
+          ),
           child: SearchBar(
             controller: _controller,
             hintText: 'Search by title or description',
@@ -56,7 +62,7 @@ class _TodoSearchBarState extends State<TodoSearchBar> {
             ),
             shape: WidgetStatePropertyAll(
               RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               ),
             ),
           ),

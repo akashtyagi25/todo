@@ -70,6 +70,8 @@ class TodoProvider extends ChangeNotifier {
 
     try {
       _todos = await _repository.getTodos();
+    } catch (_) {
+      _todos = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -104,6 +106,8 @@ class TodoProvider extends ChangeNotifier {
       _todos = [..._todos, todo];
       notifyListeners();
       return true;
+    } catch (_) {
+      return false;
     } finally {
       _isSaving = false;
       notifyListeners();
@@ -148,6 +152,8 @@ class TodoProvider extends ChangeNotifier {
       _todos = [..._todos]..[index] = updated;
       notifyListeners();
       return true;
+    } catch (_) {
+      return false;
     } finally {
       _isSaving = false;
       notifyListeners();

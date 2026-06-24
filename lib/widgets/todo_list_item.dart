@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_spacing.dart';
 import '../models/todo.dart';
 import '../utils/date_formatter.dart';
 import 'delete_todo_dialog.dart';
@@ -39,7 +40,7 @@ class TodoListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final completedColor = Colors.green;
+    final completedColor = const Color(0xFF2E7D32);
 
     return Dismissible(
       key: ValueKey(todo.id),
@@ -47,23 +48,29 @@ class TodoListItem extends StatelessWidget {
       confirmDismiss: (_) => _confirmDelete(context),
       onDismissed: (_) => onDelete(),
       background: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm - 2,
+        ),
         decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(16),
+          color: theme.colorScheme.error,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: const Icon(Icons.delete, color: Colors.white),
+        padding: const EdgeInsets.only(right: AppSpacing.lg),
+        child: Icon(Icons.delete, color: theme.colorScheme.onError),
       ),
       child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm - 2,
+        ),
         elevation: 0,
         color: _isCompleted
             ? completedColor.withValues(alpha: 0.06)
             : theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           side: BorderSide(
             color: _isCompleted
                 ? completedColor.withValues(alpha: 0.35)
@@ -72,9 +79,14 @@ class TodoListItem extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onEdit,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 12, 4, 12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.md - 4,
+              AppSpacing.xs,
+              AppSpacing.md - 4,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -162,7 +174,7 @@ class TodoListItem extends StatelessWidget {
                         icon: Icons.event_outlined,
                         label: 'Due',
                         value: DateFormatter.format(todo.dueDate),
-                        valueColor: _isOverdue ? Colors.red : null,
+                        valueColor: _isOverdue ? theme.colorScheme.error : null,
                         muted: _isCompleted,
                       ),
                       StatusChip(status: todo.status),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_spacing.dart';
+
 class TodoEmptyState extends StatelessWidget {
   const TodoEmptyState({
     super.key,
@@ -22,7 +24,7 @@ class TodoEmptyState extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -31,16 +33,14 @@ class TodoEmptyState extends StatelessWidget {
               size: 80,
               color: theme.colorScheme.primary.withValues(alpha: 0.35),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 subtitle!,
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -50,7 +50,7 @@ class TodoEmptyState extends StatelessWidget {
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.lg),
               FilledButton.icon(
                 onPressed: onAction,
                 icon: const Icon(Icons.add),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/todo_provider.dart';
+import '../constants/app_spacing.dart';
 import '../utils/todo_filter.dart';
 
 class TodoFilterBar extends StatelessWidget {
@@ -15,9 +16,9 @@ class TodoFilterBar extends StatelessWidget {
           height: 44,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             itemCount: TodoFilterOption.values.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
             itemBuilder: (context, index) {
               final filter = TodoFilterOption.values[index];
               final isSelected = provider.activeFilter == filter;

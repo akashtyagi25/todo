@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../constants/app_spacing.dart';
 import '../../models/todo.dart';
 import '../../providers/todo_provider.dart';
+import '../../utils/app_snackbar.dart';
 import '../../utils/date_formatter.dart';
 import '../../utils/todo_validator.dart';
+import '../../widgets/app_loading_button.dart';
+import '../../widgets/responsive_content.dart';
 
 class TodoFormScreen extends StatefulWidget {
   const TodoFormScreen({super.key, this.todoId});
@@ -125,131 +129,124 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
 
     if (!mounted) return;
 
-    if (saved) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.isEditing
-                ? 'Todo updated successfully'
-                : 'Todo saved successfully',
-          ),
-        ),
-      );
-      Navigator.pop(context);
+    if (!saved) {
+      AppSnackbar.error(context, 'Failed to save todo. Please try again.');
+      return;
     }
+
+    AppSnackbar.success(
+        context,
+        widget.isEditing
+            ? 'Todo updated successfully'
+            : 'Todo saved successfully',
+      );
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final isSaving = context.watch<TodoProvider>().isSaving;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit Todo' : 'Add Todo'),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title *',
-                hintText: 'Enter task title',
-                border: OutlineInputBorder(),
-              ),
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.next,
-              validator: TodoValidator.validateTitle,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                hintText: 'Enter task details (optional)',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
-              ),
-              maxLines: 4,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: isSaving ? null : _pickDueDate,
-              borderRadius: BorderRadius.circular(12),
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: 'Due Date *',
-                  border: const OutlineInputBorder(),
-                  errorText: _dueDateError,
-                  suffixIcon: const Icon(Icons.calendar_today_outlined),
-                ),
-                child: Text(DateFormatter.format(_dueDate)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Priority',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            SegmentedButton<TodoPriority>(
-              segments: TodoPriority.values
-                  .map(
-                    (priority) => ButtonSegment(
-                      value: priority,
-                      label: Text(priority.label),
-                    ),
-                  )
-                  .toList(),
-              selected: {_priority},
-              onSelectionChanged: isSaving
-                  ? null
-                  : (selection) {
-                      setState(() => _priority = selection.first);
-                    },
-            ),
-            if (widget.isEditing) ...[
-              const SizedBox(height: 16),
+      body: ResponsiveContent(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
               Text(
-                'Status',
-                style: Theme.of(context).textTheme.titleSmall,
+                widget.isEditing ? 'Update task details' : 'Create a new task',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              const SizedBox(height: 8),
-              SegmentedButton<TodoStatus>(
-                segments: TodoStatus.values
+              const SizedBox(height: AppSpacing.lg),
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title *',
+                  hintText: 'Enter task title',
+                ),
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.next,
+                validator: TodoValidator.validateTitle,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  hintText: 'Enter task details (optional)',
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              InkWell(
+                onTap: isSaving ? null : _pickDueDate,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Due Date *',
+                    errorText: _dueDateError,
+                    suffixIcon: const Icon(Icons.calendar_today_outlined),
+                  ),
+                  child: Text(DateFormatter.format(_dueDate)),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Priority', style: theme.textTheme.titleSmall),
+              const SizedBox(height: AppSpacing.sm),
+              SegmentedButton<TodoPriority>(
+                segments: TodoPriority.values
                     .map(
-                      (status) => ButtonSegment(
-                        value: status,
-                        label: Text(status.label),
+                      (priority) => ButtonSegment(
+                        value: priority,
+                        label: Text(priority.label),
                       ),
                     )
                     .toList(),
-                selected: {_status},
+                selected: {_priority},
                 onSelectionChanged: isSaving
                     ? null
                     : (selection) {
-                        setState(() => _status = selection.first);
+                        setState(() => _priority = selection.first);
                       },
               ),
-            ],
-            const SizedBox(height: 32),
-            FilledButton(
-              onPressed: isSaving ? null : _saveTodo,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: isSaving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+              if (widget.isEditing) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Text('Status', style: theme.textTheme.titleSmall),
+                const SizedBox(height: AppSpacing.sm),
+                SegmentedButton<TodoStatus>(
+                  segments: TodoStatus.values
+                      .map(
+                        (status) => ButtonSegment(
+                          value: status,
+                          label: Text(status.label),
+                        ),
                       )
-                    : Text(widget.isEditing ? 'Update Todo' : 'Save Todo'),
+                      .toList(),
+                  selected: {_status},
+                  onSelectionChanged: isSaving
+                      ? null
+                      : (selection) {
+                          setState(() => _status = selection.first);
+                        },
+                ),
+              ],
+              const SizedBox(height: AppSpacing.xl),
+              AppLoadingButton(
+                label: widget.isEditing ? 'Update Todo' : 'Save Todo',
+                isLoading: isSaving,
+                onPressed: _saveTodo,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

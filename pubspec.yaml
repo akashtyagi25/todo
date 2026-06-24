@@ -37,7 +37,11 @@ dependencies:
   provider: ^6.1.5+1
   intl: ^0.20.2
   hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  path_provider: ^2.1.4
+
+dependency_overrides:
+  # Avoid JNI-based path_provider_android 2.3.x (libdartjni.so crash on some devices).
+  path_provider_android: 2.2.15
 
 dev_dependencies:
   flutter_test:

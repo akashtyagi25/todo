@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/todo.dart';
+import '../constants/app_spacing.dart';
 
 class TodoSectionHeader extends StatelessWidget {
   const TodoSectionHeader({
@@ -19,25 +19,28 @@ class TodoSectionHeader extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
       child: Row(
         children: [
           if (icon != null) ...[
             Icon(icon, size: 18, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
           ],
-          Text(
-            title,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 8),
+          Text(title, style: theme.textTheme.titleSmall),
+          const SizedBox(width: AppSpacing.sm),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: 2,
+            ),
             decoration: BoxDecoration(
               color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             ),
             child: Text(
               '$count',
