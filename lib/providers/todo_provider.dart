@@ -18,6 +18,13 @@ class TodoProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
 
+  Todo? getTodoById(String id) {
+    for (final todo in _todos) {
+      if (todo.id == id) return todo;
+    }
+    return null;
+  }
+
   Future<void> loadTodos() async {
     _isLoading = true;
     notifyListeners();
@@ -56,6 +63,50 @@ class TodoProvider extends ChangeNotifier {
 
       await _repository.addTodo(todo);
       _todos = [..._todos, todo];
+      notifyListeners();
+      return true;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> updateTodo({
+    required String id,
+    required String title,
+    required String description,
+    required DateTime dueDate,
+    required TodoPriority priority,
+    required TodoStatus status,
+  }) async {
+    if (TodoValidator.validateTitle(title) != null) return false;
+
+    final index = _todos.indexWhere((todo) => todo.id == id);
+    if (index == -1) return false;
+
+    final original = _todos[index];
+    if (TodoValidator.validateDueDate(
+          dueDate,
+          originalDueDate: original.dueDate,
+        ) !=
+        null) {
+      return false;
+    }
+
+    _isSaving = true;
+    notifyListeners();
+
+    try {
+      final updated = original.copyWith(
+        title: title.trim(),
+        description: description.trim(),
+        dueDate: dueDate,
+        priority: priority,
+        status: status,
+      );
+
+      await _repository.updateTodo(updated);
+      _todos = [..._todos]..[index] = updated;
       notifyListeners();
       return true;
     } finally {

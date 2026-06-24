@@ -10,7 +10,16 @@ class TodoValidator {
     return null;
   }
 
-  static String? validateDueDate(DateTime dueDate) {
+  static String? validateDueDate(
+    DateTime dueDate, {
+    DateTime? originalDueDate,
+  }) {
+    if (originalDueDate != null &&
+        DateFormatter.dateOnly(dueDate) ==
+            DateFormatter.dateOnly(originalDueDate)) {
+      return null;
+    }
+
     if (DateFormatter.isBeforeToday(dueDate)) {
       return 'Due date cannot be in the past';
     }

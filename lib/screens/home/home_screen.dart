@@ -59,6 +59,11 @@ class HomeScreen extends StatelessWidget {
               return TodoListItem(
                 todo: todo,
                 onToggle: () => provider.toggleTodo(todo.id),
+                onEdit: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.editTodo,
+                  arguments: todo.id,
+                ),
                 onDelete: () => provider.deleteTodo(todo.id),
               );
             },

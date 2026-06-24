@@ -19,5 +19,16 @@ void main() {
       );
       expect(TodoValidator.validateDueDate(DateFormatter.today()), isNull);
     });
+
+    test('allows keeping original due date when editing', () {
+      final yesterday = DateFormatter.today().subtract(const Duration(days: 1));
+      expect(
+        TodoValidator.validateDueDate(
+          yesterday,
+          originalDueDate: yesterday,
+        ),
+        isNull,
+      );
+    });
   });
 }

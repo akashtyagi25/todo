@@ -10,11 +10,13 @@ class TodoListItem extends StatelessWidget {
     super.key,
     required this.todo,
     required this.onToggle,
+    required this.onEdit,
     required this.onDelete,
   });
 
   final Todo todo;
   final VoidCallback onToggle;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   bool get _isOverdue {
@@ -54,84 +56,93 @@ class TodoListItem extends StatelessWidget {
             color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 12, 12, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Checkbox(
-                    value: todo.isCompleted,
-                    onChanged: (_) => onToggle(),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
+        child: InkWell(
+          onTap: onEdit,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 12, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: todo.isCompleted,
+                      onChanged: (_) => onToggle(),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          todo.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            decoration: todo.isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                            color: todo.isCompleted
-                                ? theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.5)
-                                : null,
-                          ),
-                        ),
-                        if (todo.description.isNotEmpty) ...[
-                          const SizedBox(height: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            todo.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                            todo.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              decoration: todo.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: todo.isCompleted
+                                  ? theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.5)
+                                  : null,
                             ),
                           ),
+                          if (todo.description.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              todo.description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  PriorityChip(priority: todo.priority),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    _InfoRow(
-                      icon: Icons.event_outlined,
-                      label: 'Due',
-                      value: DateFormatter.format(todo.dueDate),
-                      valueColor: _isOverdue ? Colors.red : null,
+                    PriorityChip(priority: todo.priority),
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Edit todo',
+                      onPressed: onEdit,
                     ),
-                    StatusChip(status: todo.status),
                   ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: _InfoRow(
-                  icon: Icons.schedule_outlined,
-                  label: 'Created',
-                  value: DateFormatter.format(todo.createdDate),
-                  muted: true,
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _InfoRow(
+                        icon: Icons.event_outlined,
+                        label: 'Due',
+                        value: DateFormatter.format(todo.dueDate),
+                        valueColor: _isOverdue ? Colors.red : null,
+                      ),
+                      StatusChip(status: todo.status),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: _InfoRow(
+                    icon: Icons.schedule_outlined,
+                    label: 'Created',
+                    value: DateFormatter.format(todo.createdDate),
+                    muted: true,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

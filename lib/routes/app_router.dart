@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../screens/add_todo/add_todo_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/todo_form/todo_form_screen.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -17,7 +17,13 @@ class AppRouter {
       case AppRoutes.addTodo:
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => const AddTodoScreen(),
+          builder: (_) => const TodoFormScreen(),
+        );
+      case AppRoutes.editTodo:
+        final todoId = settings.arguments as String?;
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => TodoFormScreen(todoId: todoId),
         );
       default:
         return MaterialPageRoute<void>(
