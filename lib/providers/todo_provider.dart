@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/todo.dart';
 import '../repository/todo_repository.dart';
+import '../utils/todo_validator.dart';
 
 class TodoProvider extends ChangeNotifier {
   TodoProvider({TodoRepository? repository})
@@ -11,9 +12,11 @@ class TodoProvider extends ChangeNotifier {
 
   List<Todo> _todos = [];
   bool _isLoading = false;
+  bool _isSaving = false;
 
   List<Todo> get todos => List.unmodifiable(_todos);
   bool get isLoading => _isLoading;
+  bool get isSaving => _isSaving;
 
   Future<void> loadTodos() async {
     _isLoading = true;
@@ -27,29 +30,38 @@ class TodoProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addTodo({
+  Future<bool> addTodo({
     required String title,
     required String description,
     required DateTime dueDate,
     required TodoPriority priority,
   }) async {
-    final trimmedTitle = title.trim();
-    if (trimmedTitle.isEmpty) return;
+    if (TodoValidator.validateTitle(title) != null) return false;
+    if (TodoValidator.validateDueDate(dueDate) != null) return false;
 
-    final now = DateTime.now();
-    final todo = Todo(
-      id: now.millisecondsSinceEpoch.toString(),
-      title: trimmedTitle,
-      description: description.trim(),
-      dueDate: dueDate,
-      priority: priority,
-      status: TodoStatus.pending,
-      createdDate: now,
-    );
-
-    await _repository.addTodo(todo);
-    _todos = [..._todos, todo];
+    _isSaving = true;
     notifyListeners();
+
+    try {
+      final now = DateTime.now();
+      final todo = Todo(
+        id: now.millisecondsSinceEpoch.toString(),
+        title: title.trim(),
+        description: description.trim(),
+        dueDate: dueDate,
+        priority: priority,
+        status: TodoStatus.pending,
+        createdDate: now,
+      );
+
+      await _repository.addTodo(todo);
+      _todos = [..._todos, todo];
+      notifyListeners();
+      return true;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
   }
 
   Future<void> toggleTodo(String id) async {

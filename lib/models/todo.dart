@@ -8,6 +8,13 @@ extension TodoPriorityX on TodoPriority {
         TodoPriority.medium => 'Medium',
         TodoPriority.high => 'High',
       };
+
+  static TodoPriority fromString(String value) {
+    return TodoPriority.values.firstWhere(
+      (priority) => priority.name == value,
+      orElse: () => TodoPriority.medium,
+    );
+  }
 }
 
 extension TodoStatusX on TodoStatus {
@@ -17,6 +24,13 @@ extension TodoStatusX on TodoStatus {
       };
 
   bool get isCompleted => this == TodoStatus.completed;
+
+  static TodoStatus fromString(String value) {
+    return TodoStatus.values.firstWhere(
+      (status) => status.name == value,
+      orElse: () => TodoStatus.pending,
+    );
+  }
 }
 
 class Todo {
@@ -39,6 +53,30 @@ class Todo {
   final DateTime createdDate;
 
   bool get isCompleted => status.isCompleted;
+
+  factory Todo.fromJson(Map<String, dynamic> json) {
+    return Todo(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String? ?? '',
+      dueDate: DateTime.parse(json['dueDate'] as String),
+      priority: TodoPriorityX.fromString(json['priority'] as String),
+      status: TodoStatusX.fromString(json['status'] as String),
+      createdDate: DateTime.parse(json['createdDate'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'dueDate': dueDate.toIso8601String(),
+      'priority': priority.name,
+      'status': status.name,
+      'createdDate': createdDate.toIso8601String(),
+    };
+  }
 
   Todo copyWith({
     String? id,

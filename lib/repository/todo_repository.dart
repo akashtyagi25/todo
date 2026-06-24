@@ -4,7 +4,7 @@ import '../services/todo_local_service.dart';
 /// Single source of truth between UI and data layer.
 class TodoRepository {
   TodoRepository({TodoLocalService? localService})
-      : _localService = localService ?? TodoLocalService();
+      : _localService = localService ?? TodoLocalService.inMemory();
 
   final TodoLocalService _localService;
 
