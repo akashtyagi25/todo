@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,18 +8,38 @@ import 'providers/todo_provider.dart';
 import 'repository/todo_repository.dart';
 import 'services/hive_service.dart';
 import 'services/todo_local_service.dart';
+import 'utils/app_error_handler.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    AppErrorHandler.setup();
 
-  await HiveService.init();
-  final localService = await TodoLocalService.create();
-  final repository = TodoRepository(localService: localService);
+    TodoLocalService localService;
+    var storageUnavailable = false;
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => TodoProvider(repository: repository)..loadTodos(),
-      child: const TodoApp(),
-    ),
-  );
+    try {
+      await HiveService.init();
+      localService = await TodoLocalService.create();
+    } catch (error, stack) {
+      AppErrorHandler.log(error, stack);
+      localService = TodoLocalService.inMemory();
+      storageUnavailable = true;
+    }
+
+    final repository = TodoRepository(localService: localService);
+    final provider = TodoProvider(
+      repository: repository,
+      storageFallback: storageUnavailable,
+    );
+
+    runApp(
+      ChangeNotifierProvider.value(
+        value: provider,
+        child: const TodoApp(),
+      ),
+    );
+
+    await provider.loadTodos();
+  }, AppErrorHandler.log);
 }

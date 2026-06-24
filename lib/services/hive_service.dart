@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../constants/app_constants.dart';
+import '../core/errors/app_exception.dart';
 import '../models/todo.dart';
 import '../models/todo_adapter.dart';
 
@@ -14,18 +15,24 @@ class HiveService {
   static Future<void> init() async {
     if (_initialized) return;
 
-    if (kIsWeb) {
-      Hive.init('todo_hive');
-    } else {
-      final directory = await getApplicationDocumentsDirectory();
-      Hive.init(directory.path);
-    }
+    try {
+      if (kIsWeb) {
+        Hive.init('todo_hive');
+      } else {
+        final directory = await getApplicationDocumentsDirectory();
+        Hive.init(directory.path);
+      }
 
-    if (!Hive.isAdapterRegistered(0)) {
-      Hive.registerAdapter(TodoAdapter());
-    }
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(TodoAdapter());
+      }
 
-    _initialized = true;
+      _initialized = true;
+    } catch (error) {
+      throw StorageException(
+        'Unable to initialize local storage. Please restart the app.',
+      );
+    }
   }
 
   static Future<Box<Todo>> openTodosBox() async {
@@ -38,8 +45,12 @@ class HiveService {
     try {
       return await Hive.openBox<Todo>(AppConstants.todosBoxName);
     } catch (_) {
-      await Hive.deleteBoxFromDisk(AppConstants.todosBoxName);
-      return Hive.openBox<Todo>(AppConstants.todosBoxName);
+      try {
+        await Hive.deleteBoxFromDisk(AppConstants.todosBoxName);
+        return await Hive.openBox<Todo>(AppConstants.todosBoxName);
+      } catch (error) {
+        throw StorageException();
+      }
     }
   }
 }

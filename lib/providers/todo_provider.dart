@@ -1,21 +1,32 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/app_exception.dart';
+import '../core/result/operation_result.dart';
 import '../models/todo.dart';
 import '../repository/todo_repository.dart';
+import '../utils/error_message.dart';
 import '../utils/todo_filter.dart';
 import '../utils/todo_search.dart';
 import '../utils/todo_sort.dart';
 import '../utils/todo_validator.dart';
 
 class TodoProvider extends ChangeNotifier {
-  TodoProvider({TodoRepository? repository})
-      : _repository = repository ?? TodoRepository();
+  TodoProvider({
+    TodoRepository? repository,
+    bool storageFallback = false,
+  })  : _repository = repository ?? TodoRepository(),
+        _storageFallback = storageFallback,
+        _errorMessage = storageFallback
+            ? 'Storage is unavailable. Tasks may not persist after restart.'
+            : null;
 
   final TodoRepository _repository;
+  final bool _storageFallback;
 
   List<Todo> _todos = [];
   bool _isLoading = false;
   bool _isSaving = false;
+  String? _errorMessage;
   String _searchQuery = '';
   TodoFilterOption _activeFilter = TodoFilterOption.all;
   TodoSortOption _activeSort = TodoSortOption.createdDate;
@@ -30,10 +41,22 @@ class TodoProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   TodoFilterOption get activeFilter => _activeFilter;
   TodoSortOption get activeSort => _activeSort;
+  String? get errorMessage => _errorMessage;
+  bool get hasError => _errorMessage != null;
   bool get isSearching => _searchQuery.trim().isNotEmpty;
   bool get isFiltering => _activeFilter != TodoFilterOption.all;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+
+  void clearError() {
+    if (_errorMessage == null) return;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void _setError(Object error) {
+    _errorMessage = ErrorMessage.from(error);
+  }
 
   void setSearchQuery(String query) {
     if (_searchQuery == query) return;
@@ -70,22 +93,33 @@ class TodoProvider extends ChangeNotifier {
 
     try {
       _todos = await _repository.getTodos();
-    } catch (_) {
+      if (!_storageFallback) {
+        _errorMessage = null;
+      }
+    } catch (error) {
       _todos = [];
+      _setError(error);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> addTodo({
+  Future<OperationResult> addTodo({
     required String title,
     required String description,
     required DateTime dueDate,
     required TodoPriority priority,
   }) async {
-    if (TodoValidator.validateTitle(title) != null) return false;
-    if (TodoValidator.validateDueDate(dueDate) != null) return false;
+    final titleError = TodoValidator.validateTitle(title);
+    if (titleError != null) {
+      return OperationResult.failure(titleError);
+    }
+
+    final dueDateError = TodoValidator.validateDueDate(dueDate);
+    if (dueDateError != null) {
+      return OperationResult.failure(dueDateError);
+    }
 
     _isSaving = true;
     notifyListeners();
@@ -104,17 +138,20 @@ class TodoProvider extends ChangeNotifier {
 
       await _repository.addTodo(todo);
       _todos = [..._todos, todo];
+      if (!_storageFallback) _errorMessage = null;
       notifyListeners();
-      return true;
-    } catch (_) {
-      return false;
+      return const OperationResult.success();
+    } catch (error) {
+      _setError(error);
+      notifyListeners();
+      return OperationResult.failure(ErrorMessage.from(error));
     } finally {
       _isSaving = false;
       notifyListeners();
     }
   }
 
-  Future<bool> updateTodo({
+  Future<OperationResult> updateTodo({
     required String id,
     required String title,
     required String description,
@@ -122,21 +159,27 @@ class TodoProvider extends ChangeNotifier {
     required TodoPriority priority,
     required TodoStatus status,
   }) async {
-    if (TodoValidator.validateTitle(title) != null) return false;
+    final titleError = TodoValidator.validateTitle(title);
+    if (titleError != null) {
+      return OperationResult.failure(titleError);
+    }
 
     final index = _todos.indexWhere((todo) => todo.id == id);
-    if (index == -1) return false;
+    if (index == -1) {
+      return const OperationResult.failure('Task not found.');
+    }
 
     final original = _todos[index];
-    if (TodoValidator.validateDueDate(
-          dueDate,
-          originalDueDate: original.dueDate,
-        ) !=
-        null) {
-      return false;
+    final dueDateError = TodoValidator.validateDueDate(
+      dueDate,
+      originalDueDate: original.dueDate,
+    );
+    if (dueDateError != null) {
+      return OperationResult.failure(dueDateError);
     }
 
     _isSaving = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -150,52 +193,76 @@ class TodoProvider extends ChangeNotifier {
 
       await _repository.updateTodo(updated);
       _todos = [..._todos]..[index] = updated;
+      if (!_storageFallback) _errorMessage = null;
       notifyListeners();
-      return true;
-    } catch (_) {
-      return false;
+      return const OperationResult.success();
+    } catch (error) {
+      _setError(error);
+      notifyListeners();
+      return OperationResult.failure(ErrorMessage.from(error));
     } finally {
       _isSaving = false;
       notifyListeners();
     }
   }
 
-  Future<void> completeTodo(String id) async {
-    await _updateStatus(id, TodoStatus.completed);
+  Future<OperationResult> completeTodo(String id) async {
+    return _updateStatus(id, TodoStatus.completed);
   }
 
-  Future<void> reopenTodo(String id) async {
-    await _updateStatus(id, TodoStatus.pending);
+  Future<OperationResult> reopenTodo(String id) async {
+    return _updateStatus(id, TodoStatus.pending);
   }
 
-  Future<void> toggleTodo(String id) async {
+  Future<OperationResult> toggleTodo(String id) async {
     final todo = getTodoById(id);
-    if (todo == null) return;
+    if (todo == null) {
+      return const OperationResult.failure('Task not found.');
+    }
 
     if (todo.status == TodoStatus.pending) {
-      await completeTodo(id);
-    } else {
-      await reopenTodo(id);
+      return completeTodo(id);
     }
+    return reopenTodo(id);
   }
 
-  Future<void> _updateStatus(String id, TodoStatus status) async {
+  Future<OperationResult> _updateStatus(String id, TodoStatus status) async {
     final index = _todos.indexWhere((todo) => todo.id == id);
-    if (index == -1) return;
+    if (index == -1) {
+      return const OperationResult.failure('Task not found.');
+    }
 
     final current = _todos[index];
-    if (current.status == status) return;
+    if (current.status == status) {
+      return const OperationResult.success();
+    }
 
     final updated = current.copyWith(status: status);
 
-    await _repository.updateTodo(updated);
-    _todos = [..._todos]..[index] = updated;
-    notifyListeners();
+    try {
+      await _repository.updateTodo(updated);
+      _todos = [..._todos]..[index] = updated;
+      if (!_storageFallback) _errorMessage = null;
+      notifyListeners();
+      return const OperationResult.success();
+    } catch (error) {
+      _setError(error);
+      notifyListeners();
+      return OperationResult.failure(ErrorMessage.from(error));
+    }
   }
 
-  Future<void> deleteTodo(String id) async {
-    await _repository.removeTodo(id);
-    _todos = _todos.where((todo) => todo.id != id).toList();
-    notifyListeners();
+  Future<OperationResult> deleteTodo(String id) async {
+    try {
+      await _repository.removeTodo(id);
+      _todos = _todos.where((todo) => todo.id != id).toList();
+      if (!_storageFallback) _errorMessage = null;
+      notifyListeners();
+      return const OperationResult.success();
+    } catch (error) {
+      _setError(error);
+      notifyListeners();
+      return OperationResult.failure(ErrorMessage.from(error));
+    }
   }
 }

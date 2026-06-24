@@ -8,6 +8,7 @@ import '../../providers/todo_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/app_snackbar.dart';
 import '../../utils/todo_filter.dart';
+import '../../widgets/app_error_banner.dart';
 import '../../widgets/app_loading_view.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/todo_empty_state.dart';
@@ -21,23 +22,40 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   Future<void> _deleteTodo(BuildContext context, Todo todo) async {
-    await context.read<TodoProvider>().deleteTodo(todo.id);
+    final result = await context.read<TodoProvider>().deleteTodo(todo.id);
 
     if (!context.mounted) return;
+
+    if (!result.success) {
+      AppSnackbar.error(
+        context,
+        result.errorMessage ?? 'Unable to delete the task.',
+      );
+      return;
+    }
 
     AppSnackbar.success(context, '"${todo.title}" deleted');
   }
 
   Future<void> _toggleStatus(BuildContext context, Todo todo) async {
     final provider = context.read<TodoProvider>();
+    final result = todo.isCompleted
+        ? await provider.reopenTodo(todo.id)
+        : await provider.completeTodo(todo.id);
+
+    if (!context.mounted) return;
+
+    if (!result.success) {
+      AppSnackbar.error(
+        context,
+        result.errorMessage ?? 'Unable to update task status.',
+      );
+      return;
+    }
 
     if (todo.isCompleted) {
-      await provider.reopenTodo(todo.id);
-      if (!context.mounted) return;
       AppSnackbar.info(context, '"${todo.title}" marked as pending');
     } else {
-      await provider.completeTodo(todo.id);
-      if (!context.mounted) return;
       AppSnackbar.success(context, '"${todo.title}" marked as completed');
     }
   }
@@ -52,14 +70,33 @@ class HomeScreen extends StatelessWidget {
     return 'No ${provider.activeFilter.label.toLowerCase()} tasks found.';
   }
 
-  Widget _buildNoTasksEmptyState(BuildContext context) {
+  Widget _buildErrorBanner(BuildContext context, TodoProvider provider) {
+    final message = provider.errorMessage;
+    if (message == null) return const SizedBox.shrink();
+
+    return AppErrorBanner(
+      message: message,
+      onRetry: () => provider.loadTodos(),
+      onDismiss: provider.clearError,
+    );
+  }
+
+  Widget _buildNoTasksEmptyState(BuildContext context, TodoProvider provider) {
     return ResponsiveContent(
       child: TodoEmptyState(
-        icon: Icons.task_alt_outlined,
-        title: AppConstants.emptyTasksTitle,
-        subtitle: AppConstants.emptyTasksSubtitle,
-        actionLabel: 'Create Task',
-        onAction: () => Navigator.pushNamed(context, AppRoutes.addTodo),
+        icon: provider.hasError
+            ? Icons.error_outline
+            : Icons.task_alt_outlined,
+        title: provider.hasError
+            ? 'Unable to load tasks'
+            : AppConstants.emptyTasksTitle,
+        subtitle: provider.hasError
+            ? provider.errorMessage
+            : AppConstants.emptyTasksSubtitle,
+        actionLabel: provider.hasError ? 'Retry' : 'Create Task',
+        onAction: provider.hasError
+            ? () => provider.loadTodos()
+            : () => Navigator.pushNamed(context, AppRoutes.addTodo),
       ),
     );
   }
@@ -148,18 +185,26 @@ class HomeScreen extends StatelessWidget {
           }
 
           if (provider.todos.isEmpty) {
-            return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: KeyedSubtree(
-                key: const ValueKey('empty-tasks'),
-                child: _buildNoTasksEmptyState(context),
-              ),
+            return Column(
+              children: [
+                _buildErrorBanner(context, provider),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: KeyedSubtree(
+                      key: const ValueKey('empty-tasks'),
+                      child: _buildNoTasksEmptyState(context, provider),
+                    ),
+                  ),
+                ),
+              ],
             );
           }
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _buildErrorBanner(context, provider),
               const ResponsiveContent(child: TodoSearchBar()),
               const SizedBox(height: AppSpacing.xs),
               const ResponsiveContent(child: TodoFilterBar()),

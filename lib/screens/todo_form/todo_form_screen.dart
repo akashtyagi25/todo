@@ -48,7 +48,9 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
     final todo = context.read<TodoProvider>().getTodoById(widget.todoId!);
     if (todo == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.pop(context);
+        if (!mounted) return;
+        AppSnackbar.error(context, 'Task not found.');
+        Navigator.pop(context);
       });
       return;
     }
@@ -108,10 +110,12 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
       );
     });
 
-    if (!_formKey.currentState!.validate() || _dueDateError != null) return;
+    if (!(_formKey.currentState?.validate() ?? false) || _dueDateError != null) {
+      return;
+    }
 
     final provider = context.read<TodoProvider>();
-    final saved = widget.isEditing
+    final result = widget.isEditing
         ? await provider.updateTodo(
             id: widget.todoId!,
             title: _titleController.text,
@@ -129,17 +133,20 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
 
     if (!mounted) return;
 
-    if (!saved) {
-      AppSnackbar.error(context, 'Failed to save todo. Please try again.');
+    if (!result.success) {
+      AppSnackbar.error(
+        context,
+        result.errorMessage ?? 'Failed to save todo. Please try again.',
+      );
       return;
     }
 
     AppSnackbar.success(
-        context,
-        widget.isEditing
-            ? 'Todo updated successfully'
-            : 'Todo saved successfully',
-      );
+      context,
+      widget.isEditing
+          ? 'Todo updated successfully'
+          : 'Todo saved successfully',
+    );
     Navigator.pop(context);
   }
 

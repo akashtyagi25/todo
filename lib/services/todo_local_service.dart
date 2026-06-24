@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 
+import '../core/errors/app_exception.dart';
 import '../models/todo.dart';
 import 'hive_service.dart';
 
@@ -12,8 +13,6 @@ class TodoLocalService {
   final Box<Todo>? _box;
   final List<Todo> _memoryTodos;
 
-  bool get _usesHive => _box != null;
-
   static Future<TodoLocalService> create() async {
     final box = await HiveService.openTodosBox();
     return TodoLocalService._(box: box);
@@ -24,41 +23,59 @@ class TodoLocalService {
   }
 
   Future<List<Todo>> fetchTodos() async {
-    final box = _box;
-    if (box != null) {
-      return box.values.toList();
+    try {
+      final box = _box;
+      if (box != null) {
+        return box.values.toList();
+      }
+      return List<Todo>.from(_memoryTodos);
+    } catch (error) {
+      throw StorageException('Unable to load tasks.');
     }
-    return List<Todo>.from(_memoryTodos);
   }
 
   Future<void> saveTodo(Todo todo) async {
-    final box = _box;
-    if (box != null) {
-      await box.put(todo.id, todo);
-      return;
+    try {
+      final box = _box;
+      if (box != null) {
+        await box.put(todo.id, todo);
+        return;
+      }
+      _memoryTodos.add(todo);
+    } catch (error) {
+      throw StorageException('Unable to save the task.');
     }
-    _memoryTodos.add(todo);
   }
 
   Future<void> updateTodo(Todo todo) async {
-    final box = _box;
-    if (box != null) {
-      await box.put(todo.id, todo);
-      return;
-    }
+    try {
+      final box = _box;
+      if (box != null) {
+        await box.put(todo.id, todo);
+        return;
+      }
 
-    final index = _memoryTodos.indexWhere((item) => item.id == todo.id);
-    if (index != -1) {
+      final index = _memoryTodos.indexWhere((item) => item.id == todo.id);
+      if (index == -1) {
+        throw const NotFoundException();
+      }
       _memoryTodos[index] = todo;
+    } catch (error) {
+      if (error is AppException) rethrow;
+      throw StorageException('Unable to update the task.');
     }
   }
 
   Future<void> deleteTodo(String id) async {
-    final box = _box;
-    if (box != null) {
-      await box.delete(id);
-      return;
+    try {
+      final box = _box;
+      if (box != null) {
+        await box.delete(id);
+        return;
+      }
+      _memoryTodos.removeWhere((todo) => todo.id == id);
+    } catch (error) {
+      throw StorageException('Unable to delete the task.');
     }
-    _memoryTodos.removeWhere((todo) => todo.id == id);
   }
 }
