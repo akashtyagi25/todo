@@ -4,6 +4,7 @@ import '../models/todo.dart';
 import '../repository/todo_repository.dart';
 import '../utils/todo_filter.dart';
 import '../utils/todo_search.dart';
+import '../utils/todo_sort.dart';
 import '../utils/todo_validator.dart';
 
 class TodoProvider extends ChangeNotifier {
@@ -17,15 +18,18 @@ class TodoProvider extends ChangeNotifier {
   bool _isSaving = false;
   String _searchQuery = '';
   TodoFilterOption _activeFilter = TodoFilterOption.all;
+  TodoSortOption _activeSort = TodoSortOption.createdDate;
 
   List<Todo> get todos => List.unmodifiable(_todos);
   List<Todo> get filteredTodos {
     final filtered = TodoFilter.apply(_todos, _activeFilter);
-    return TodoSearch.filter(filtered, _searchQuery);
+    final searched = TodoSearch.filter(filtered, _searchQuery);
+    return TodoSort.apply(searched, _activeSort);
   }
 
   String get searchQuery => _searchQuery;
   TodoFilterOption get activeFilter => _activeFilter;
+  TodoSortOption get activeSort => _activeSort;
   bool get isSearching => _searchQuery.trim().isNotEmpty;
   bool get isFiltering => _activeFilter != TodoFilterOption.all;
   bool get isLoading => _isLoading;
@@ -44,6 +48,12 @@ class TodoProvider extends ChangeNotifier {
   void setFilter(TodoFilterOption filter) {
     if (_activeFilter == filter) return;
     _activeFilter = filter;
+    notifyListeners();
+  }
+
+  void setSort(TodoSortOption sort) {
+    if (_activeSort == sort) return;
+    _activeSort = sort;
     notifyListeners();
   }
 

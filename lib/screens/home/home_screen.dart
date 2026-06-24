@@ -10,6 +10,7 @@ import '../../widgets/todo_filter_bar.dart';
 import '../../widgets/todo_list_item.dart';
 import '../../widgets/todo_search_bar.dart';
 import '../../widgets/todo_section_header.dart';
+import '../../widgets/todo_sort_button.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -136,6 +137,10 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppConstants.appName),
+        actions: const [
+          TodoSortButton(),
+          SizedBox(width: 8),
+        ],
       ),
       body: Consumer<TodoProvider>(
         builder: (context, provider, _) {
