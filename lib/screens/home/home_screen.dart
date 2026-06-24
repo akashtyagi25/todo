@@ -6,6 +6,7 @@ import '../../models/todo.dart';
 import '../../providers/todo_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/todo_list_item.dart';
+import '../../widgets/todo_search_bar.dart';
 import '../../widgets/todo_section_header.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -39,6 +40,78 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
+  Widget _buildEmptyState(BuildContext context, {required String message}) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off_outlined,
+            size: 72,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: Theme.of(context).textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodoList(BuildContext context, List<Todo> todos) {
+    final pendingTodos =
+        todos.where((todo) => todo.status == TodoStatus.pending).toList();
+    final completedTodos =
+        todos.where((todo) => todo.status == TodoStatus.completed).toList();
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 88),
+      children: [
+        if (pendingTodos.isNotEmpty) ...[
+          TodoSectionHeader(
+            title: 'Pending',
+            count: pendingTodos.length,
+            icon: Icons.pending_actions_outlined,
+          ),
+          ...pendingTodos.map(
+            (todo) => TodoListItem(
+              todo: todo,
+              onToggle: () => _toggleStatus(context, todo),
+              onEdit: () => Navigator.pushNamed(
+                context,
+                AppRoutes.editTodo,
+                arguments: todo.id,
+              ),
+              onDelete: () => _deleteTodo(context, todo),
+            ),
+          ),
+        ],
+        if (completedTodos.isNotEmpty) ...[
+          TodoSectionHeader(
+            title: 'Completed',
+            count: completedTodos.length,
+            icon: Icons.task_alt_outlined,
+          ),
+          ...completedTodos.map(
+            (todo) => TodoListItem(
+              todo: todo,
+              onToggle: () => _toggleStatus(context, todo),
+              onEdit: () => Navigator.pushNamed(
+                context,
+                AppRoutes.editTodo,
+                arguments: todo.id,
+              ),
+              onDelete: () => _deleteTodo(context, todo),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,84 +124,59 @@ class HomeScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (provider.todos.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.checklist_rounded,
-                    size: 72,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.4),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No todos yet',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap + to create your first todo',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final pendingTodos = provider.todos
-              .where((todo) => todo.status == TodoStatus.pending)
-              .toList();
-          final completedTodos = provider.todos
-              .where((todo) => todo.status == TodoStatus.completed)
-              .toList();
-
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 88),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (pendingTodos.isNotEmpty) ...[
-                TodoSectionHeader(
-                  title: 'Pending',
-                  count: pendingTodos.length,
-                  icon: Icons.pending_actions_outlined,
+              const TodoSearchBar(),
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    if (provider.todos.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.checklist_rounded,
+                              size: 72,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValues(alpha: 0.4),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No todos yet',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Tap + to create your first todo',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (provider.filteredTodos.isEmpty) {
+                      return _buildEmptyState(
+                        context,
+                        message: 'No todos match "${provider.searchQuery}"',
+                      );
+                    }
+
+                    return _buildTodoList(context, provider.filteredTodos);
+                  },
                 ),
-                ...pendingTodos.map(
-                  (todo) => TodoListItem(
-                    todo: todo,
-                    onToggle: () => _toggleStatus(context, todo),
-                    onEdit: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.editTodo,
-                      arguments: todo.id,
-                    ),
-                    onDelete: () => _deleteTodo(context, todo),
-                  ),
-                ),
-              ],
-              if (completedTodos.isNotEmpty) ...[
-                TodoSectionHeader(
-                  title: 'Completed',
-                  count: completedTodos.length,
-                  icon: Icons.task_alt_outlined,
-                ),
-                ...completedTodos.map(
-                  (todo) => TodoListItem(
-                    todo: todo,
-                    onToggle: () => _toggleStatus(context, todo),
-                    onEdit: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.editTodo,
-                      arguments: todo.id,
-                    ),
-                    onDelete: () => _deleteTodo(context, todo),
-                  ),
-                ),
-              ],
+              ),
             ],
           );
         },

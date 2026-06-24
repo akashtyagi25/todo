@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/todo.dart';
 import '../repository/todo_repository.dart';
+import '../utils/todo_search.dart';
 import '../utils/todo_validator.dart';
 
 class TodoProvider extends ChangeNotifier {
@@ -13,10 +14,25 @@ class TodoProvider extends ChangeNotifier {
   List<Todo> _todos = [];
   bool _isLoading = false;
   bool _isSaving = false;
+  String _searchQuery = '';
 
   List<Todo> get todos => List.unmodifiable(_todos);
+  List<Todo> get filteredTodos =>
+      TodoSearch.filter(_todos, _searchQuery);
+  String get searchQuery => _searchQuery;
+  bool get isSearching => _searchQuery.trim().isNotEmpty;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+
+  void setSearchQuery(String query) {
+    if (_searchQuery == query) return;
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void clearSearch() {
+    setSearchQuery('');
+  }
 
   Todo? getTodoById(String id) {
     for (final todo in _todos) {
