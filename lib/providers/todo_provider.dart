@@ -115,16 +115,33 @@ class TodoProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> completeTodo(String id) async {
+    await _updateStatus(id, TodoStatus.completed);
+  }
+
+  Future<void> reopenTodo(String id) async {
+    await _updateStatus(id, TodoStatus.pending);
+  }
+
   Future<void> toggleTodo(String id) async {
+    final todo = getTodoById(id);
+    if (todo == null) return;
+
+    if (todo.status == TodoStatus.pending) {
+      await completeTodo(id);
+    } else {
+      await reopenTodo(id);
+    }
+  }
+
+  Future<void> _updateStatus(String id, TodoStatus status) async {
     final index = _todos.indexWhere((todo) => todo.id == id);
     if (index == -1) return;
 
     final current = _todos[index];
-    final updated = current.copyWith(
-      status: current.status == TodoStatus.pending
-          ? TodoStatus.completed
-          : TodoStatus.pending,
-    );
+    if (current.status == status) return;
+
+    final updated = current.copyWith(status: status);
 
     await _repository.updateTodo(updated);
     _todos = [..._todos]..[index] = updated;

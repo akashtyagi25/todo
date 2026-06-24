@@ -20,8 +20,10 @@ class TodoListItem extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  bool get _isCompleted => todo.isCompleted;
+
   bool get _isOverdue {
-    if (todo.isCompleted) return false;
+    if (_isCompleted) return false;
 
     final today = DateTime.now();
     final due = DateTime(todo.dueDate.year, todo.dueDate.month, todo.dueDate.day);
@@ -37,6 +39,7 @@ class TodoListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final completedColor = Colors.green;
 
     return Dismissible(
       key: ValueKey(todo.id),
@@ -56,10 +59,15 @@ class TodoListItem extends StatelessWidget {
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         elevation: 0,
+        color: _isCompleted
+            ? completedColor.withValues(alpha: 0.06)
+            : theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+            color: _isCompleted
+                ? completedColor.withValues(alpha: 0.35)
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
           ),
         ),
         child: InkWell(
@@ -73,11 +81,17 @@ class TodoListItem extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Checkbox(
-                      value: todo.isCompleted,
-                      onChanged: (_) => onToggle(),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+                    Tooltip(
+                      message: _isCompleted
+                          ? 'Mark as pending'
+                          : 'Mark as completed',
+                      child: Checkbox(
+                        value: _isCompleted,
+                        onChanged: (_) => onToggle(),
+                        activeColor: completedColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ),
                     Expanded(
@@ -88,12 +102,12 @@ class TodoListItem extends StatelessWidget {
                             todo.title,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              decoration: todo.isCompleted
+                              decoration: _isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
-                              color: todo.isCompleted
+                              color: _isCompleted
                                   ? theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.5)
+                                      .withValues(alpha: 0.45)
                                   : null,
                             ),
                           ),
@@ -104,14 +118,23 @@ class TodoListItem extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                                color: _isCompleted
+                                    ? theme.colorScheme.onSurfaceVariant
+                                        .withValues(alpha: 0.5)
+                                    : theme.colorScheme.onSurfaceVariant,
+                                decoration: _isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
                               ),
                             ),
                           ],
                         ],
                       ),
                     ),
-                    PriorityChip(priority: todo.priority),
+                    Opacity(
+                      opacity: _isCompleted ? 0.55 : 1,
+                      child: PriorityChip(priority: todo.priority),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.edit_outlined),
                       tooltip: 'Edit todo',
@@ -140,8 +163,28 @@ class TodoListItem extends StatelessWidget {
                         label: 'Due',
                         value: DateFormatter.format(todo.dueDate),
                         valueColor: _isOverdue ? Colors.red : null,
+                        muted: _isCompleted,
                       ),
                       StatusChip(status: todo.status),
+                      if (_isCompleted)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              size: 14,
+                              color: completedColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Done',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: completedColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
@@ -183,7 +226,7 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textColor = muted
-        ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8)
+        ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
         : theme.colorScheme.onSurfaceVariant;
 
     return Row(
@@ -200,6 +243,9 @@ class _InfoRow extends StatelessWidget {
           style: theme.textTheme.bodySmall?.copyWith(
             color: valueColor ?? textColor,
             fontWeight: valueColor != null ? FontWeight.w600 : null,
+            decoration: muted && valueColor == null
+                ? TextDecoration.lineThrough
+                : null,
           ),
         ),
       ],

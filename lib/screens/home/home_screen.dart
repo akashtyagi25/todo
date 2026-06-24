@@ -6,6 +6,7 @@ import '../../models/todo.dart';
 import '../../providers/todo_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/todo_list_item.dart';
+import '../../widgets/todo_section_header.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,24 @@ class HomeScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('"${todo.title}" deleted')),
     );
+  }
+
+  Future<void> _toggleStatus(BuildContext context, Todo todo) async {
+    final provider = context.read<TodoProvider>();
+
+    if (todo.isCompleted) {
+      await provider.reopenTodo(todo.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${todo.title}" marked as pending')),
+      );
+    } else {
+      await provider.completeTodo(todo.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${todo.title}" marked as completed')),
+      );
+    }
   }
 
   @override
@@ -62,22 +81,55 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: provider.todos.length,
-            itemBuilder: (context, index) {
-              final todo = provider.todos[index];
-              return TodoListItem(
-                todo: todo,
-                onToggle: () => provider.toggleTodo(todo.id),
-                onEdit: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.editTodo,
-                  arguments: todo.id,
+          final pendingTodos = provider.todos
+              .where((todo) => todo.status == TodoStatus.pending)
+              .toList();
+          final completedTodos = provider.todos
+              .where((todo) => todo.status == TodoStatus.completed)
+              .toList();
+
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 88),
+            children: [
+              if (pendingTodos.isNotEmpty) ...[
+                TodoSectionHeader(
+                  title: 'Pending',
+                  count: pendingTodos.length,
+                  icon: Icons.pending_actions_outlined,
                 ),
-                onDelete: () => _deleteTodo(context, todo),
-              );
-            },
+                ...pendingTodos.map(
+                  (todo) => TodoListItem(
+                    todo: todo,
+                    onToggle: () => _toggleStatus(context, todo),
+                    onEdit: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.editTodo,
+                      arguments: todo.id,
+                    ),
+                    onDelete: () => _deleteTodo(context, todo),
+                  ),
+                ),
+              ],
+              if (completedTodos.isNotEmpty) ...[
+                TodoSectionHeader(
+                  title: 'Completed',
+                  count: completedTodos.length,
+                  icon: Icons.task_alt_outlined,
+                ),
+                ...completedTodos.map(
+                  (todo) => TodoListItem(
+                    todo: todo,
+                    onToggle: () => _toggleStatus(context, todo),
+                    onEdit: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.editTodo,
+                      arguments: todo.id,
+                    ),
+                    onDelete: () => _deleteTodo(context, todo),
+                  ),
+                ),
+              ],
+            ],
           );
         },
       ),
