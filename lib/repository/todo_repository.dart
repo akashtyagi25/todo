@@ -12,5 +12,7 @@ class TodoRepository {
 
   Future<void> addTodo(Todo todo) => _localService.saveTodo(todo);
 
+  Future<void> updateTodo(Todo todo) => _localService.updateTodo(todo);
+
   Future<void> removeTodo(String id) => _localService.deleteTodo(id);
 }
