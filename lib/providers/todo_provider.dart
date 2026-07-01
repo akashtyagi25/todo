@@ -264,6 +264,11 @@ class TodoProvider extends ChangeNotifier {
   }
 
   Future<OperationResult> deleteTodo(String id) async {
+    final index = _todos.indexWhere((todo) => todo.id == id);
+    if (index == -1) {
+      return const OperationResult.failure('Task not found.');
+    }
+
     try {
       await _repository.removeTodo(id);
       _todos = _todos.where((todo) => todo.id != id).toList();
