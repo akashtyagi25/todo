@@ -5,6 +5,7 @@ import '../../constants/app_constants.dart';
 import '../../constants/app_spacing.dart';
 import '../../models/todo.dart';
 import '../../providers/todo_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/app_snackbar.dart';
 import '../../utils/todo_filter.dart';
@@ -144,10 +145,20 @@ class HomeScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text(AppConstants.appName),
-            actions: const [
-              ThemeToggleButton(),
-              TodoSortButton(),
-              SizedBox(width: AppSpacing.sm),
+            automaticallyImplyLeading: false,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: () async {
+                  await context.read<AuthProvider>().logout();
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+                  }
+                },
+              ),
+              const ThemeToggleButton(),
+              const TodoSortButton(),
+              const SizedBox(width: AppSpacing.sm),
             ],
           ),
           body: _buildBody(context, provider),

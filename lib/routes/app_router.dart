@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../screens/home/home_screen.dart';
 import '../screens/todo_form/todo_form_screen.dart';
+import '../screens/auth/login_screen.dart';
+import '../screens/auth/register_screen.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -24,6 +26,16 @@ class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => TodoFormScreen(todoId: todoId),
+        );
+      case AppRoutes.login:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const LoginScreen(),
+        );
+      case AppRoutes.register:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const RegisterScreen(),
         );
       default:
         return MaterialPageRoute<void>(

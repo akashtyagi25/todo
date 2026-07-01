@@ -8,7 +8,7 @@ class TodoRepository {
 
   final TodoLocalService _localService;
 
-  Future<List<Todo>> getTodos() => _localService.fetchTodos();
+  Future<List<Todo>> getTodos(String userId) => _localService.fetchTodos(userId);
 
   Future<void> addTodo(Todo todo) => _localService.saveTodo(todo);
 

@@ -22,13 +22,13 @@ class TodoLocalService {
     return TodoLocalService._(memoryTodos: <Todo>[]);
   }
 
-  Future<List<Todo>> fetchTodos() async {
+  Future<List<Todo>> fetchTodos(String userId) async {
     try {
       final box = _box;
       if (box != null) {
-        return box.values.toList();
+        return box.values.where((todo) => todo.userId == userId).toList();
       }
-      return List<Todo>.from(_memoryTodos);
+      return _memoryTodos.where((todo) => todo.userId == userId).toList();
     } catch (error) {
       throw StorageException('Unable to load tasks.');
     }

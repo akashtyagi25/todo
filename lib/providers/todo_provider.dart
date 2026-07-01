@@ -14,14 +14,19 @@ class TodoProvider extends ChangeNotifier {
   TodoProvider({
     TodoRepository? repository,
     bool storageFallback = false,
+    String? userId,
   })  : _repository = repository ?? TodoRepository(),
         _storageFallback = storageFallback,
+        _userId = userId,
         _errorMessage = storageFallback
             ? 'Storage is unavailable. Tasks may not persist after restart.'
             : null;
 
   final TodoRepository _repository;
   final bool _storageFallback;
+  final String? _userId;
+
+  String? get userId => _userId;
 
   List<Todo> _todos = [];
   bool _isLoading = false;
@@ -92,7 +97,12 @@ class TodoProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _todos = await _repository.getTodos();
+      final uid = _userId;
+      if (uid == null) {
+        _todos = [];
+        return;
+      }
+      _todos = await _repository.getTodos(uid);
       if (!_storageFallback) {
         _errorMessage = null;
       }
@@ -134,6 +144,7 @@ class TodoProvider extends ChangeNotifier {
         priority: priority,
         status: TodoStatus.pending,
         createdDate: now,
+        userId: _userId ?? '',
       );
 
       await _repository.addTodo(todo);

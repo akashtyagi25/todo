@@ -6,6 +6,8 @@ import '../constants/app_constants.dart';
 import '../core/errors/app_exception.dart';
 import '../models/todo.dart';
 import '../models/todo_adapter.dart';
+import '../models/user.dart';
+import '../models/user_adapter.dart';
 
 class HiveService {
   HiveService._();
@@ -25,6 +27,9 @@ class HiveService {
 
       if (!Hive.isAdapterRegistered(0)) {
         Hive.registerAdapter(TodoAdapter());
+      }
+      if (!Hive.isAdapterRegistered(1)) {
+        Hive.registerAdapter(UserAdapter());
       }
 
       _initialized = true;
@@ -52,5 +57,21 @@ class HiveService {
         throw StorageException();
       }
     }
+  }
+
+  static Future<Box<User>> openUsersBox() async {
+    await init();
+    if (Hive.isBoxOpen(AppConstants.usersBoxName)) {
+      return Hive.box<User>(AppConstants.usersBoxName);
+    }
+    return await Hive.openBox<User>(AppConstants.usersBoxName);
+  }
+
+  static Future<Box<dynamic>> openAuthBox() async {
+    await init();
+    if (Hive.isBoxOpen(AppConstants.authBoxName)) {
+      return Hive.box<dynamic>(AppConstants.authBoxName);
+    }
+    return await Hive.openBox<dynamic>(AppConstants.authBoxName);
   }
 }

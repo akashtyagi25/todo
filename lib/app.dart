@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'constants/app_constants.dart';
 import 'constants/app_theme.dart';
 import 'providers/theme_provider.dart';
+import 'providers/auth_provider.dart';
 import 'routes/app_router.dart';
 import 'routes/app_routes.dart';
 
@@ -12,6 +13,8 @@ class TodoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final isAuthenticated = authProvider.isAuthenticated;
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
         return MaterialApp(
@@ -20,7 +23,7 @@ class TodoApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-          initialRoute: AppRoutes.home,
+          initialRoute: isAuthenticated ? AppRoutes.home : AppRoutes.login,
           onGenerateRoute: AppRouter.onGenerateRoute,
         );
       },

@@ -16,6 +16,7 @@ class TodoAdapter extends TypeAdapter<Todo> {
       priority: TodoPriority.values[reader.readByte()],
       status: TodoStatus.values[reader.readByte()],
       createdDate: DateTime.fromMillisecondsSinceEpoch(reader.readInt()),
+      userId: reader.availableBytes > 0 ? reader.readString() : '',
     );
   }
 
@@ -28,6 +29,7 @@ class TodoAdapter extends TypeAdapter<Todo> {
       ..writeInt(obj.dueDate.millisecondsSinceEpoch)
       ..writeByte(obj.priority.index)
       ..writeByte(obj.status.index)
-      ..writeInt(obj.createdDate.millisecondsSinceEpoch);
+      ..writeInt(obj.createdDate.millisecondsSinceEpoch)
+      ..writeString(obj.userId);
   }
 }

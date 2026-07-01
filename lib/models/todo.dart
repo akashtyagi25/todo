@@ -42,6 +42,7 @@ class Todo {
     required this.priority,
     required this.status,
     required this.createdDate,
+    this.userId = '',
   });
 
   final String id;
@@ -51,6 +52,7 @@ class Todo {
   final TodoPriority priority;
   final TodoStatus status;
   final DateTime createdDate;
+  final String userId;
 
   bool get isCompleted => status.isCompleted;
 
@@ -63,6 +65,7 @@ class Todo {
       priority: TodoPriorityX.fromString(json['priority'] as String),
       status: TodoStatusX.fromString(json['status'] as String),
       createdDate: DateTime.parse(json['createdDate'] as String),
+      userId: json['userId'] as String? ?? '',
     );
   }
 
@@ -75,6 +78,7 @@ class Todo {
       'priority': priority.name,
       'status': status.name,
       'createdDate': createdDate.toIso8601String(),
+      'userId': userId,
     };
   }
 
@@ -86,6 +90,7 @@ class Todo {
     TodoPriority? priority,
     TodoStatus? status,
     DateTime? createdDate,
+    String? userId,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -95,6 +100,7 @@ class Todo {
       priority: priority ?? this.priority,
       status: status ?? this.status,
       createdDate: createdDate ?? this.createdDate,
+      userId: userId ?? this.userId,
     );
   }
 }
